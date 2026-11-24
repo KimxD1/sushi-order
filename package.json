@@ -1,0 +1,10 @@
+{
+  "name": "kids-sushi-order",
+  "version": "1.0.0",
+  "description": "유아용 초밥집 주문 시스템 (테이블 4대 + 카운터/주방 + NFC 결제기)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "MIT"
+}

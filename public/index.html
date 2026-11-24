@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>꼬마 초밥집 · 기기 고르기</title>
+<link rel="stylesheet" href="/css/common.css">
+<style>
+  html, body { height: 100%; }
+  body { min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: clamp(16px, 4vh, 40px) clamp(16px, 3vw, 32px); }
+  .wrap { width: min(1100px, 100%); }
+  .hero { display: flex; align-items: center; gap: clamp(12px, 2vw, 22px); margin-bottom: clamp(10px, 3vh, 28px); padding-right: 64px; }
+  .hero .art { width: clamp(90px, 16vh, 150px); aspect-ratio: 3 / 2; flex: none; }
+  .hero h1 { margin: 0; word-break: keep-all; font-size: clamp(24px, 5vh, 40px); font-weight: 800; letter-spacing: -0.04em; }
+  .hero p { margin: 4px 0 0; font-size: clamp(14px, 2.4vh, 19px); color: var(--text3); font-weight: 500; }
+  h2 { font-size: clamp(14px, 2.2vh, 18px); color: var(--text3); font-weight: 700; margin: clamp(10px, 2.4vh, 24px) 0 clamp(6px, 1.4vh, 12px); }
+  .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(10px, 1.6vw, 16px); }
+  .grid.one { grid-template-columns: 1fr; }
+  @media (orientation: portrait) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  a.dev { display: flex; flex-direction: column; gap: clamp(4px, 1vh, 10px); padding: clamp(14px, 2.6vh, 24px); border-radius: 24px; background: #fff; box-shadow: var(--shadow); text-decoration: none; color: var(--text); }
+  a.dev .ic { width: clamp(40px, 7vh, 56px); height: clamp(40px, 7vh, 56px); border-radius: 16px; display: grid; place-items: center; font-size: clamp(22px, 4vh, 30px); background: var(--primary-soft); }
+  a.dev b { font-size: clamp(19px, 3.4vh, 26px); font-weight: 800; }
+  a.dev span { font-size: clamp(13px, 2vh, 15px); color: var(--text3); font-weight: 600; }
+  a.dev.main { flex-direction: row; align-items: center; gap: 16px; }
+  a.dev.main .ic { background: var(--line2); }
+  a.dev.main div.tx { display: flex; flex-direction: column; gap: 4px; }
+  .tip { margin-top: clamp(12px, 2.6vh, 24px); padding: clamp(12px, 2vh, 18px) 20px; background: #fff; border-radius: 18px; color: var(--text2); font-size: clamp(13px, 2vh, 16px); line-height: 1.6; }
+  .tip code { background: var(--line2); padding: 2px 8px; border-radius: 6px; font-weight: 700; word-break: break-all; }
+  @media (max-height: 640px) { .tip { display: none; } }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero rise">
+      <div class="art" id="heroArt"></div>
+      <div><h1>꼬마 초밥집 주문 시스템</h1><p>이 태블릿을 어디에 둘지 골라 주세요</p></div>
+    </div>
+
+    <h2>🍣 손님 테이블 (주문)</h2>
+    <div class="grid" id="tables"></div>
+
+    <h2>🧑‍🍳 주방 · 카운터</h2>
+    <div class="grid one">
+      <a class="dev main press rise" href="/main" style="animation-delay:.25s"><div class="ic">🧑‍🍳</div><div class="tx"><b>주방 · 카운터</b><span>테이블별 주문 확인 · 메뉴 판매 설정</span></div></a>
+    </div>
+
+    <a class="dev main press rise" href="/editor" style="animation-delay:.3s;margin-top:clamp(10px,1.6vw,16px);background:#fff"><div class="ic" style="background:var(--primary-soft)">🖼️</div><div class="tx"><b style="font-size:clamp(16px,2.6vh,20px)">메뉴 사진 다듬기 <span style="font-size:13px;color:var(--text3);font-weight:700">(컴퓨터에서)</span></b><span>초밥 사진의 영역을 붓으로 고치고 앱에 적용해요</span></div></a>
+
+    <div class="tip">💡 고른 화면을 <b>홈 화면에 추가</b>해 두면 다음부터 바로 열려요.
+      주소를 직접 쓸 때는 <code id="addr">/table/1</code> 처럼 입력하면 돼요.</div>
+  </div>
+  <script src="/js/sushi-art.js"></script>
+  <script src="/js/common.js"></script>
+  <script>
+    App.mountFullscreen(document.body, 'float');
+    document.getElementById('heroArt').innerHTML = SushiArt.svg('salmon');
+    document.getElementById('tables').innerHTML = [1, 2, 3, 4].map((t, i) =>
+      `<a class="dev press rise" href="/table/${t}" style="animation-delay:${.05 + i * .05}s"><div class="ic">🪑</div><b>테이블 ${t}</b><span>메뉴 고르고 주문하기</span></a>`).join('');
+    document.getElementById('addr').textContent = location.origin + '/table/1';
+  </script>
+</body>
+</html>

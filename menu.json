@@ -1,0 +1,13 @@
+{
+  "shopName": "꼬마 초밥집",
+  "tables": [1, 2, 3, 4],
+  "menu": [
+    { "id": "egg",      "name": "계란초밥",     "price": 1000, "desc": "달콤하고 폭신한 계란" },
+    { "id": "inari",    "name": "유부초밥",     "price": 1000, "desc": "새콤달콤 유부 주머니" },
+    { "id": "shrimp",   "name": "간장새우초밥", "price": 1000, "desc": "짭조름한 간장에 재운 새우" },
+    { "id": "salmon",   "name": "연어초밥",     "price": 1000, "desc": "사르르 녹는 부드러운 연어" },
+    { "id": "beef",     "name": "고기초밥",     "price": 1000, "desc": "불맛 가득 구운 소고기" },
+    { "id": "roe",      "name": "알초밥",       "price": 1000, "desc": "톡톡 터지는 날치알" },
+    { "id": "eggplant", "name": "가지초밥",     "price": 1000, "desc": "달큰하게 구운 가지" }
+  ]
+}

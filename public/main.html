@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#FFFFFF">
+<title>주방 · 카운터</title>
+<link rel="stylesheet" href="/css/common.css">
+<style>
+  html, body { height: 100%; }
+  body { display: flex; flex-direction: column; overflow: hidden; }
+  .m-header { display: flex; align-items: center; gap: clamp(10px, 1.6vw, 20px); padding: clamp(8px, 1.6vh, 14px) clamp(12px, 2vw, 24px); background: #fff; border-bottom: 1px solid var(--line2); flex: none; }
+  .m-brand { display: flex; align-items: center; gap: 12px; min-width: 170px; }
+  .m-brand .logo { width: 46px; height: 46px; border-radius: 14px; background: var(--text); display: grid; place-items: center; font-size: 24px; }
+  .m-brand b { display: block; font-size: 20px; font-weight: 800; }
+  .m-brand small { font-size: 14px; color: var(--text3); font-weight: 600; }
+
+  .tabs { position: relative; display: flex; background: var(--line2); border-radius: 16px; padding: 5px; flex: none; }
+  .tabs button { position: relative; z-index: 1; height: 46px; padding: 0 22px; border-radius: 12px; font-size: 17px; font-weight: 700; color: var(--text3); transition: color .3s; display: flex; align-items: center; gap: 6px; }
+  .tabs button.on { color: var(--text); }
+  .tabs .ind { position: absolute; top: 5px; height: 46px; border-radius: 12px; background: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, .08); transition: left .45s var(--spring), width .45s var(--spring); }
+  .clock { margin-left: auto; font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--text2); }
+
+  #view { flex: 1; overflow: auto; padding: clamp(12px, 2.4vh, 22px) clamp(12px, 2vw, 24px) 24px; }
+  #view.enter > * { animation: rise .45s var(--ease) both; }
+
+  /* ---------- 테이블 (스크롤 없이 한 화면에) ---------- */
+  #view.fit { overflow: hidden; padding: 1.6vh 1.6vw; }
+  .tables-grid { height: 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); gap: 1.4vw; }
+  @media (orientation: portrait) { .tables-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 1.6vh; } }
+  .tcard { min-height: 0; background: #fff; border-radius: clamp(16px, 2.4vh, 26px); padding: clamp(10px, 2vh, 22px) clamp(10px, 1.4vw, 20px); box-shadow: var(--shadow); display: flex; flex-direction: column; overflow: hidden; }
+  .tcard.bump { animation: cardBump .9s var(--ease); }
+  @keyframes cardBump { 0% { box-shadow: 0 0 0 0 rgba(255, 107, 74, .6), var(--shadow); } 30% { box-shadow: 0 0 0 6px rgba(255, 107, 74, .45), var(--shadow); } 100% { box-shadow: 0 0 0 0 rgba(255, 107, 74, 0), var(--shadow); } }
+  .tcard .th { display: flex; justify-content: space-between; align-items: center; gap: 6px; flex: none; }
+  .tcard .th b { font-size: clamp(18px, 3.2vh, 28px); font-weight: 800; white-space: nowrap; }
+  .tcard .th .chip { font-size: clamp(12px, 1.7vh, 14px); height: auto; padding: 4px 8px; white-space: nowrap; }
+  /* 주문 건별 상자 (--k: 칸이 차면 자동으로 줄어드는 비율) */
+  .tcard { --k: 1; }
+  .orders { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: calc(clamp(6px, 1vh, 10px) * var(--k)); margin-top: calc(1.2vh * var(--k)); }
+  .ord { flex: none; background: var(--line2); border-radius: calc(clamp(10px, 1.6vh, 16px) * var(--k)); padding: calc(clamp(8px, 1.2vh, 12px) * var(--k)) calc(clamp(10px, 1vw, 14px) * var(--k)); border-left: 4px solid var(--line); }
+  .ord:first-child { border-left-color: var(--primary); }
+  .ord.flash { animation: ordIn .6s var(--spring) both, flashBg 2.6s ease .3s; }
+  @keyframes ordIn { from { opacity: 0; transform: translateY(-16px) scale(.95); } }
+  @keyframes flashBg { 0%, 60% { background: var(--primary-soft2); } 100% { background: var(--line2); } }
+  .ord-head { display: flex; align-items: baseline; gap: 6px; margin-bottom: calc(clamp(4px, .8vh, 8px) * var(--k)); white-space: nowrap; }
+  .ord-head b { font-size: calc(clamp(14px, 2.2vh, 19px) * var(--k)); font-weight: 800; }
+  .ord-head small { font-size: calc(clamp(11px, 1.6vh, 14px) * var(--k)); color: var(--text3); font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+  .ord-head .amt { margin-left: auto; font-size: calc(clamp(13px, 2vh, 17px) * var(--k)); font-weight: 800; color: var(--text2); }
+  .ord-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(118px * var(--k)), 1fr)); gap: calc(4px * var(--k)) calc(10px * var(--k)); }
+  .oi { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: calc(clamp(13px, 2vh, 17px) * var(--k)); font-weight: 700; }
+  .oi .th2 { height: calc(clamp(20px, 3vh, 28px) * var(--k)); aspect-ratio: 4 / 3; border-radius: 5px; overflow: hidden; background: #FFF3EC; flex: none; }
+  .oi span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .oi em { font-style: normal; color: var(--primary); font-weight: 800; white-space: nowrap; }
+  .more { flex: none; text-align: center; font-size: clamp(11px, 1.6vh, 14px); font-weight: 700; color: var(--text3); background: #fff; border: 1px dashed var(--line); border-radius: 10px; padding: 6px; }
+  .tcard .empty-t { flex: 1; min-height: 0; display: grid; place-items: center; color: var(--text4); font-size: clamp(13px, 2vh, 18px); font-weight: 700; text-align: center; }
+  .tcard .tsum { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; padding-top: 1.2vh; margin-top: 1vh; border-top: 1px solid var(--line2); flex: none; }
+  .tcard .tsum span { color: var(--text3); font-weight: 700; font-size: clamp(12px, 1.9vh, 17px); white-space: nowrap; }
+  .tcard .tsum b { font-size: clamp(18px, 3.4vh, 30px); font-weight: 800; white-space: nowrap; }
+
+  /* ---------- 메뉴 판매 설정 (가로: 좌우 2단, 세로: 위아래) ---------- */
+  .menu-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: clamp(12px, 2vw, 20px); align-items: start; max-width: 1200px; margin: 0 auto; }
+  @media (orientation: portrait) { .menu-layout { grid-template-columns: 1fr; max-width: 760px; } }
+  .panel { background: #fff; border-radius: 26px; padding: clamp(14px, 2.4vh, 22px) clamp(16px, 2vw, 26px); box-shadow: var(--shadow); }
+  .panel h3 { margin: 0 0 4px; font-size: clamp(18px, 3vh, 22px); font-weight: 800; }
+  .panel .desc { color: var(--text3); font-size: clamp(13px, 2vh, 15px); margin: 0 0 clamp(4px, 1vh, 12px); line-height: 1.5; }
+  .switch-row { display: flex; align-items: center; gap: 14px; padding: clamp(5px, 1.1vh, 12px) 0; border-bottom: 1px solid var(--line2); font-weight: 700; font-size: clamp(15px, 2.4vh, 18px); }
+  .switch-row:last-child { border-bottom: 0; }
+  .switch-row .th2 { height: clamp(34px, 5.6vh, 46px); aspect-ratio: 4 / 3; border-radius: 10px; overflow: hidden; background: #FFF3EC; flex: none; }
+  .switch-row span { flex: 1; }
+  .switch-row em { font-style: normal; font-size: 14px; color: var(--red); font-weight: 800; margin-left: 6px; }
+  .switch { width: 56px; height: 34px; border-radius: 17px; background: var(--line); position: relative; transition: background .25s; flex: none; }
+  .switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 28px; height: 28px; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, .2); transition: transform .35s var(--spring); }
+  .switch.on { background: var(--mint); } .switch.on::after { transform: translateX(22px); }
+  .reset-panel .btn { width: 100%; margin-top: 8px; }
+  .starter h1 { font-size: 32px; }
+  @media (max-width: 900px) { .tabs button { padding: 0 14px; font-size: 15px; } .m-header { padding: 10px 14px; gap: 10px; } .m-brand { min-width: 0; } .m-brand small { display: none; } }
+</style>
+</head>
+<body>
+  <header class="m-header">
+    <div class="m-brand"><div class="logo">🧑‍🍳</div><div><b>주방 · 카운터</b><small id="shopName">꼬마 초밥집</small></div></div>
+    <nav class="tabs" id="tabs">
+      <span class="ind" id="tabInd"></span>
+      <button data-tab="tables" class="on">🪑 테이블</button>
+      <button data-tab="menu">🥢 메뉴 판매 설정</button>
+    </nav>
+    <div class="clock" id="clock">00:00</div>
+  </header>
+  <main id="view"></main>
+
+  <div class="starter" id="starter">
+    <div class="big">🧑‍🍳</div>
+    <h1>주방 · 카운터</h1>
+    <p>새 주문이 들어오면 "띵동" 소리로 알려 드려요</p>
+    <button class="btn lg" id="btnStart" style="width:280px">시작하기</button>
+  </div>
+
+  <script src="/js/sushi-art.js"></script>
+  <script src="/js/common.js"></script>
+  <script src="/js/main.js"></script>
+</body>
+</html>

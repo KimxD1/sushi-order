@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>메뉴 사진 다듬기</title>
+<link rel="stylesheet" href="/css/common.css">
+<style>
+  html, body { height: 100%; }
+  body { height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+  .e-header { flex: none; display: flex; align-items: center; gap: 14px; padding: 12px 20px; background: #fff; border-bottom: 1px solid var(--line2); }
+  .e-header .logo { width: 44px; height: 44px; border-radius: 14px; background: var(--primary); display: grid; place-items: center; font-size: 22px; }
+  .e-header b { display: block; font-size: 20px; font-weight: 800; }
+  .e-header small { font-size: 14px; color: var(--text3); font-weight: 600; }
+  .e-header .sp { flex: 1; }
+  .e-header a { font-size: 15px; font-weight: 700; color: var(--text3); text-decoration: none; padding: 10px 14px; border-radius: 12px; background: var(--line2); }
+
+  .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: 220px minmax(0, 1fr) 320px; gap: 14px; padding: 14px; }
+  .panel { background: #fff; border-radius: 22px; box-shadow: var(--shadow); min-height: 0; }
+
+  /* 왼쪽: 메뉴 목록 */
+  .list { display: flex; flex-direction: column; padding: 12px; gap: 6px; overflow-y: auto; }
+  .list h3 { margin: 4px 6px 6px; font-size: 15px; color: var(--text3); }
+  .item { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 14px; text-align: left; transition: background .2s; }
+  .item:hover { background: var(--line2); }
+  .item.on { background: var(--primary-soft); box-shadow: inset 0 0 0 2px var(--primary); }
+  .item img { width: 54px; height: 40px; object-fit: cover; border-radius: 8px; flex: none; background: #eee; }
+  .item b { display: block; font-size: 15px; font-weight: 800; }
+  .item i { font-style: normal; font-size: 12px; font-weight: 700; }
+  .item i.ok { color: var(--mint); } .item i.no { color: var(--text4); }
+  .list .all { margin-top: auto; }
+  .list .all .btn { width: 100%; height: 46px; font-size: 14px; }
+  .list .all p { font-size: 12px; color: var(--text3); margin: 6px 2px 0; line-height: 1.5; }
+
+  /* 가운데: 편집 화면 */
+  .stage { display: flex; flex-direction: column; overflow: hidden; }
+  .toolbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line2); flex-wrap: wrap; }
+  .tool { height: 44px; padding: 0 14px; border-radius: 12px; background: var(--line2); font-weight: 800; font-size: 15px; color: var(--text2); display: inline-flex; align-items: center; gap: 6px; transition: background .2s, color .2s, transform .15s; }
+  .tool:active { transform: scale(.95); }
+  .tool.on { background: var(--text); color: #fff; }
+  .tool.add.on { background: var(--mint); } .tool.erase.on { background: var(--red); }
+  .tool:disabled { opacity: .35; pointer-events: none; }
+  .sep { width: 1px; height: 28px; background: var(--line); margin: 0 4px; }
+  .size { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--text3); }
+  .size input { width: 130px; accent-color: var(--primary); }
+  .size b { min-width: 34px; color: var(--text); }
+  .wrap { position: relative; flex: 1; min-height: 0; background:
+      linear-gradient(45deg, #eceef1 25%, transparent 25%, transparent 75%, #eceef1 75%) 0 0 / 24px 24px,
+      linear-gradient(45deg, #eceef1 25%, #f7f8fa 25%, #f7f8fa 75%, #eceef1 75%) 12px 12px / 24px 24px; touch-action: none; overflow: hidden; }
+  .wrap canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .wrap.pan { cursor: grab; } .wrap.panning { cursor: grabbing; } .wrap.paint { cursor: none; }
+  .hint { flex: none; padding: 8px 14px; font-size: 13px; color: var(--text3); border-top: 1px solid var(--line2); }
+  .hint kbd { background: var(--line2); border-radius: 5px; padding: 1px 6px; font-family: inherit; font-weight: 700; color: var(--text2); }
+  .loading[hidden] { display: none; }
+  .loading { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 700; color: var(--text3); background: rgba(255,255,255,.7); }
+
+  /* 오른쪽: 미리보기 + 저장 */
+  .side { display: flex; flex-direction: column; padding: 16px; gap: 12px; overflow-y: auto; }
+  .side h3 { margin: 0; font-size: 18px; font-weight: 800; }
+  .side .desc { margin: 0; font-size: 13px; color: var(--text3); line-height: 1.5; }
+  .pv-card { background: #fff; border-radius: 22px; padding: 10px 10px 16px; box-shadow: var(--shadow); }
+  .pv-img { aspect-ratio: 4 / 3; border-radius: 16px; overflow: hidden; background: radial-gradient(circle at 50% 40%, #FFF8F3 0%, #FFE9DE 100%); }
+  .pv-img canvas { width: 100%; height: 100%; display: block; }
+  .pv-card b { display: block; font-size: 19px; font-weight: 800; margin: 10px 6px 0; }
+  .pv-card span { display: block; font-size: 16px; font-weight: 800; color: var(--primary); margin: 4px 6px 0; }
+  .st { font-size: 13px; font-weight: 700; padding: 10px 12px; border-radius: 12px; background: var(--line2); color: var(--text3); }
+  .st.ok { background: var(--mint-soft); color: var(--mint); }
+  .st.dirty { background: var(--yellow-soft); color: #D9820B; }
+  .side .btn { width: 100%; }
+  .side .btn.sm2 { height: 44px; font-size: 15px; }
+
+  @media (max-width: 1100px) { .layout { grid-template-columns: 170px minmax(0, 1fr) 260px; } .size input { width: 90px; } .tool span { display: none; } }
+</style>
+</head>
+<body>
+  <header class="e-header">
+    <div class="logo">🖼️</div>
+    <div><b>메뉴 사진 다듬기</b><small>분홍으로 덮인 곳은 지워지고, 나머지가 메뉴 사진으로 남아요</small></div>
+    <div class="sp"></div>
+    <a href="/">← 처음 화면</a>
+    <span id="fsSlot"></span>
+  </header>
+
+  <div class="layout">
+    <aside class="panel list" id="list">
+      <h3>메뉴 고르기</h3>
+      <div class="all">
+        <button class="btn soft" id="btnSaveAll">📦 7장 모두 지금 영역으로 저장</button>
+        <p>자동으로 오려 둔 영역 그대로 한꺼번에 앱에 적용해요. 고칠 사진만 따로 다듬어 다시 저장하면 돼요.</p>
+      </div>
+    </aside>
+
+    <section class="panel stage">
+      <div class="toolbar">
+        <button class="tool add on" data-tool="add" title="살리기 (B)">🖌 <span>살리기</span></button>
+        <button class="tool erase" data-tool="erase" title="지우기 (E)">🧽 <span>지우기</span></button>
+        <button class="tool" data-tool="pan" title="화면 이동 (스페이스바 누른 채 끌기)">✋ <span>이동</span></button>
+        <div class="sep"></div>
+        <label class="size">붓 크기 <input type="range" id="size" min="6" max="240" value="60"><b id="sizeVal">60</b></label>
+        <div class="sep"></div>
+        <button class="tool" id="zoomOut" title="축소">－</button>
+        <button class="tool" id="zoomFit" title="화면에 맞추기">⤢ <span>맞춤</span></button>
+        <button class="tool" id="zoomIn" title="확대">＋</button>
+        <div class="sep"></div>
+        <button class="tool" id="undo" title="되돌리기 (Ctrl+Z)">↶ <span>되돌리기</span></button>
+        <button class="tool" id="redo" title="다시 하기 (Ctrl+Y)">↷</button>
+        <button class="tool" id="toggleTint" title="분홍 표시 켜기/끄기 (V)">👁 <span>원본 보기</span></button>
+      </div>
+      <div class="wrap paint" id="wrap"><canvas id="view"></canvas><div class="loading" id="loading">사진 불러오는 중…</div></div>
+      <div class="hint">
+        <kbd>B</kbd> 살리기 · <kbd>E</kbd> 지우기 · <kbd>스페이스</kbd>+끌기 이동 · 마우스 휠 확대/축소 · <kbd>[</kbd> <kbd>]</kbd> 붓 크기 · <kbd>Ctrl+Z</kbd> 되돌리기 · <kbd>V</kbd> 원본 보기
+      </div>
+    </section>
+
+    <aside class="panel side">
+      <h3>앱에서 보이는 모습</h3>
+      <div class="pv-card"><div class="pv-img"><canvas id="pv" width="600" height="450"></canvas></div><b id="pvName">-</b><span>1,000원</span></div>
+      <div class="st" id="status">-</div>
+      <button class="btn lg" id="btnSave">💾 저장하고 앱에 적용</button>
+      <button class="btn secondary sm2" id="btnAuto">↺ 자동으로 오린 영역으로 되돌리기</button>
+      <button class="btn danger sm2" id="btnRemove">🎨 사진 빼고 기본 그림으로</button>
+      <p class="desc">저장하면 <b>public\images</b> 폴더에 사진이 들어가고, 켜져 있는 테이블 태블릿에도 바로 바뀌어요.<br>테두리는 저장할 때 자동으로 부드럽게 다듬어져요.</p>
+    </aside>
+  </div>
+
+  <script src="/js/sushi-art.js"></script>
+  <script src="/js/common.js"></script>
+  <script src="/js/editor.js"></script>
+</body>
+</html>
