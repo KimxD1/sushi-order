@@ -35,6 +35,15 @@ function save() {
   } catch (e) { console.error('저장 실패:', e.message); }
 }
 
+// 메뉴 목소리: public/sounds/menu/<메뉴id>.mp3 (m4a·wav·ogg도 가능)
+function voiceFor(id) {
+  for (const ext of ['mp3', 'm4a', 'wav', 'ogg']) {
+    const f = path.join(PUBLIC, 'sounds', 'menu', `${id}.${ext}`);
+    if (fs.existsSync(f)) return `/sounds/menu/${id}.${ext}?v=${Math.floor(fs.statSync(f).mtimeMs)}`;
+  }
+  return null;
+}
+
 function imageFor(id) {
   for (const ext of ['jpg', 'jpeg', 'png', 'webp']) {
     const f = path.join(PUBLIC, 'images', `${id}.${ext}`);
@@ -60,7 +69,7 @@ function publicState() {
   return {
     shopName: CONFIG.shopName,
     tables: CONFIG.tables,
-    menu: CONFIG.menu.map(m => ({ ...m, image: imageFor(m.id), soldOut: !!state.soldOut[m.id] })),
+    menu: CONFIG.menu.map(m => ({ ...m, image: imageFor(m.id), voice: voiceFor(m.id), soldOut: !!state.soldOut[m.id] })),
     orders: state.orders,
     sounds: soundFiles(),
     serverTime: Date.now()

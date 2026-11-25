@@ -148,8 +148,9 @@ window.App = (function () {
     c.decodeAudioData(f.data.slice(0), buf => { f.buf = buf; }, () => { f.loading = false; });
   }
   App.loadSounds = function () {
-    const list = (App.state && App.state.sounds) || {};
-    Object.values(list).forEach(url => {
+    const list = Object.values((App.state && App.state.sounds) || {});
+    ((App.state && App.state.menu) || []).forEach(m => { if (m.voice) list.push(m.voice); });   // 메뉴 목소리도 미리 받기
+    list.forEach(url => {
       if (files[url]) return;
       const f = files[url] = { el: new Audio(url) };
       f.el.preload = 'auto';
@@ -169,6 +170,69 @@ window.App = (function () {
     }
     return true;
   }
+  // ---------- 메뉴 목소리 (아이들 녹음) ----------
+  // 규칙
+  //  1) 목소리는 한 번에 하나만 나와요 (겹치지 않음)
+  //  2) 같은 메뉴를 다시 누르면: 지금 나오는 목소리를 끝까지 듣고, 새로 시작하지 않아요
+  //     → "가가가가지초밥"처럼 앞부분만 반복되는 일이 없어요 (담기는 누를 때마다 그대로 돼요)
+  //  3) 다른 메뉴를 누르면: 지금 목소리를 0.08초 동안 부드럽게 줄이고 새 메뉴 목소리를 처음부터
+  //  4) 메뉴를 0.35초 안에 연달아 누르면: 손이 멈출 때(0.25초)까지 기다렸다가 마지막 메뉴 목소리만 나와요
+  //  5) 같은 메뉴라도 목소리가 끝난 뒤 0.4초가 지나면 다시 들려줘요
+  const voice = { id: null, url: null, stop: null, until: 0, lastStart: 0, lastTap: 0, pending: null, pendingId: null };
+  const VOICE_BURST = 350, VOICE_SETTLE = 250, VOICE_REPEAT_GAP = 400, VOICE_FADE = 0.08;
+  function voiceStop(fade = true) {
+    if (voice.stop) { try { voice.stop(fade); } catch (e) {} }
+    voice.stop = null;
+  }
+  function voiceStart(id, url) {
+    voiceStop(true);
+    const c = audio(), f = files[url];
+    voice.id = id; voice.url = url; voice.lastStart = Date.now();
+    if (c && f && f.buf) {
+      const src = c.createBufferSource(), g = c.createGain();
+      src.buffer = f.buf; src.connect(g); g.connect(c.destination); src.start();
+      voice.until = Date.now() + f.buf.duration * 1000;
+      const me = src;
+      src.onended = () => { if (voice.stop && voice.stop.src === me) { voice.stop = null; voice.until = Date.now(); } };
+      voice.stop = fade => {
+        const t = c.currentTime;
+        if (fade) { g.gain.setValueAtTime(g.gain.value, t); g.gain.linearRampToValueAtTime(0, t + VOICE_FADE); src.stop(t + VOICE_FADE + 0.01); }
+        else src.stop();
+      };
+      voice.stop.src = me;
+    } else {
+      if (f) decode(url);
+      const el = (f && f.el ? f.el : new Audio(url)).cloneNode();
+      el.play().catch(() => {});
+      voice.until = Date.now() + 2500;                     // 길이를 아직 모를 때 잠시 막아 두기
+      el.onloadedmetadata = () => { voice.until = voice.lastStart + el.duration * 1000; };
+      el.onended = () => { voice.stop = null; voice.until = Date.now(); };
+      voice.stop = () => { el.pause(); };
+    }
+  }
+  App.voice = {
+    play(id) {
+      const m = App.menuById(id);
+      if (!m || !m.voice) return false;
+      const now = Date.now(), burst = now - voice.lastTap < VOICE_BURST;
+      voice.lastTap = now;
+      const playing = !!voice.stop && now < voice.until;
+      // 규칙 2·5: 같은 메뉴 → 재생 중이거나 끝난 지 얼마 안 됐으면 처음부터 다시 틀지 않음
+      if (voice.id === id && !voice.pendingId && (playing || now < voice.until + VOICE_REPEAT_GAP)) return 'same';
+      clearTimeout(voice.pending);
+      // 규칙 4: 연달아 누르는 중이면 손이 멈출 때까지 기다렸다가 마지막 메뉴만
+      if (burst && (playing || voice.pendingId)) {
+        voice.pendingId = id;
+        voice.pending = setTimeout(() => { voice.pendingId = null; if (voice.id !== id || Date.now() > voice.until) voiceStart(id, m.voice); }, VOICE_SETTLE);
+        return 'queued';
+      }
+      voice.pendingId = null;
+      voiceStart(id, m.voice);                              // 규칙 1·3
+      return 'play';
+    },
+    stop() { clearTimeout(voice.pending); voice.pendingId = null; voiceStop(true); voice.id = null; voice.until = 0; }
+  };
+
   // 소리가 켜지는 순간 받아 둔 파일을 모두 준비
   App.prepareSounds = () => Object.keys(files).forEach(decode);
   function make(name, synth) { return () => { if (!playFile(name)) synth(); }; }

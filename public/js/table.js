@@ -49,7 +49,10 @@
     const item = App.menuById(id);
     if (!item || item.soldOut) return;
     cart[id] = (cart[id] || 0) + 1;
-    App.sound.add(); App.vibrate(15);
+    // 목소리가 있으면 목소리, 없으면 '뽁' 효과음 (목소리를 무시한 연타에도 '뽁'은 나서 담긴 걸 알 수 있어요)
+    const v = App.voice.play(id);
+    if (v !== 'play' && v !== 'queued') App.sound.add();
+    App.vibrate(15);
     const bar = $('#cartBar');
     const wasHidden = !bar.classList.contains('show');
     refreshCart();
